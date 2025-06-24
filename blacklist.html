@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerenciar Blacklist</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fffafc;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    h1 {
+      color: #ff1493;
+      text-align: center;
+    }
+    input, button {
+      font-size: 1em;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #ff1493;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #d01379;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 5px 0;
+      display: flex;
+      justify-content: space-between;
+    }
+    .remover {
+      background: red;
+      border: none;
+      color: white;
+      border-radius: 6px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Gerenciar Palavras Proibidas</h1>
+
+<input type="text" id="novaPalavra" placeholder="Digite a palavra ou regex proibida">
+<button onclick="adicionarPalavra()">Adicionar à blacklist</button>
+
+<h2>Palavras na blacklist:</h2>
+<ul id="listaPalavras"></ul>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, getDocs, deleteDoc, doc
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyD9wwW6Yexz-xVYP08ALoZQumMIeCEd5c8",
+    authDomain: "fofocafamosa01.firebaseapp.com",
+    projectId: "fofocafamosa01",
+    storageBucket: "fofocafamosa01.firebasestorage.app",
+    messagingSenderId: "221926538264",
+    appId: "1:221926538264:web:770ac871ee7391f2fb576d"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const colRef = collection(db, "blacklist");
+
+  window.adicionarPalavra = async function () {
+    const input = document.getElementById("novaPalavra");
+    const valor = input.value.trim();
+
+    if (!valor) {
+      alert("Digite uma palavra ou expressão regular.");
+      return;
+    }
+
+    await addDoc(colRef, { regex: valor });
+    input.value = "";
+    carregarBlacklist();
+  };
+
+  async function carregarBlacklist() {
+    const ul = document.getElementById("listaPalavras");
+    ul.innerHTML = "Carregando...";
+
+    const snap = await getDocs(colRef);
+    ul.innerHTML = "";
+
+    snap.forEach(docSnap => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <span>${docSnap.data().regex}</span>
+        <button class="remover" onclick="remover('${docSnap.id}')">Remover</button>
+      `;
+      ul.appendChild(li);
+    });
+  }
+
+  window.remover = async function (id) {
+    if (confirm("Deseja mesmo remover esta palavra da blacklist?")) {
+      await deleteDoc(doc(db, "blacklist", id));
+      carregarBlacklist();
+    }
+  };
+
+  carregarBlacklist();
+</script>
+
+</body>
+</html>
